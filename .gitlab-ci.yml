@@ -1,0 +1,10 @@
+upload:
+  image: alpine
+  script:
+    - ls 
+  artifacts:
+    paths:
+      - ./
+  only:
+    - branches
+
