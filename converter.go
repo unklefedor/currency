@@ -19,7 +19,7 @@ const (
 )
 
 var defaultSupportedFiats = []string{
-	"KRW", "JPY",
+	"KRW", "JPY", "TRY",
 	"EUR", "GBP", "RUB",
 	"CNY", "CHF", "AUD", "CAD", "BRL",
 }
