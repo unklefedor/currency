@@ -134,7 +134,7 @@ func (c *converter) getRemoteConvertMods() (map[string]float64, error) {
 	for _, mod := range additionalFiats {
 		rate, err := c.getAdditionalRemoteConvertMods(mod)
 		if err != nil {
-			return nil, err
+			continue
 		}
 
 		if _, ok := convertMods.Rates[mod]; !ok {
