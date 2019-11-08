@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"math"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -15,14 +16,20 @@ import (
 
 const (
 	baseURL                       = "https://api.openrates.io/latest?base=USD"
+	additionalURL                 = "http://currencies.apps.grandtrunk.net/getlatest/"
 	fiatsConvertModUpdateInterval = 1 * time.Hour
 )
 
-var defaultSupportedFiats = []string{
-	"KRW", "JPY", "TRY",
-	"EUR", "GBP", "RUB",
-	"CNY", "CHF", "AUD", "CAD", "BRL",
-}
+var (
+	defaultSupportedFiats = []string{
+		"KRW", "JPY", "TRY",
+		"EUR", "GBP", "RUB",
+		"CNY", "CHF", "AUD", "CAD", "BRL", "UAH", "IRR",
+	}
+	additionalFiats = []string{
+		"UAH", "IRR",
+	}
+)
 
 type converter struct {
 	client *http.Client
@@ -119,7 +126,23 @@ func (c *converter) getRemoteConvertMods() (map[string]float64, error) {
 	}
 
 	convertMods := new(usdConvertMods)
-	return convertMods.Rates, json.Unmarshal(b, &convertMods)
+	err = json.Unmarshal(b, &convertMods)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, mod := range additionalFiats {
+		rate, err := c.getAdditionalRemoteConvertMods(mod)
+		if err != nil {
+			return nil, err
+		}
+
+		if _, ok := convertMods.Rates[mod]; !ok {
+			convertMods.Rates[mod] = rate
+		}
+	}
+
+	return convertMods.Rates, nil
 }
 
 func (c *converter) AppendCustomFiat(key string, value float64) {
@@ -156,4 +179,20 @@ func indexOfString(element string, data []string) int {
 	}
 
 	return -1
+}
+
+func (c *converter) getAdditionalRemoteConvertMods(mod string) (float64, error) {
+	resp, err := c.client.Get(fmt.Sprintf("%s/%s/%s", additionalURL, "USD", mod))
+	if err != nil {
+		return 0, err
+	}
+
+	defer resp.Body.Close()
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return 0, err
+	}
+
+	return strconv.ParseFloat(string(b), 64)
 }
