@@ -125,8 +125,8 @@ func (c *converter) getRemoteConvertMods() (map[string]float64, error) {
 		return nil, err
 	}
 
-	convertMods := new(usdConvertMods)
-	err = json.Unmarshal(b, &convertMods)
+	convertMods := &usdConvertMods{}
+	err = json.Unmarshal(b, convertMods)
 	if err != nil {
 		return nil, err
 	}
